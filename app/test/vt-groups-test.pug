@@ -1,0 +1,72 @@
+doctype html
+html
+  head
+    meta(name='viewport', content='width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes')
+    title groups
+    script(src='../bower_components/webcomponentsjs/webcomponents-lite.js')
+    script(src='../bower_components/web-component-tester/browser.js')
+    script(src='../bower_components/test-fixture/test-fixture-mocha.js')
+
+    link(rel='import', href='../bower_components/polymer/polymer.html')
+    link(rel='import', href='../bower_components/iron-ajax/iron-ajax.html')
+    link(rel='import', href='../elements/vt-groups.html')
+    script(src='./utils/helpers.js')
+  body
+    test-fixture#basic
+      template
+        vt-groups#vtGroups
+    script.
+      window.addEventListener('WebComponentsReady', (e) => {
+
+      Polymer({
+        is: 'fake-ajax',
+        properties: {
+          url: {
+            type: String,
+            notify: true
+          },
+          lastResponse: {
+            type: Object,
+            notify: true
+          },
+          loading: {
+            type: Boolean,
+            value: false,
+            notify: true
+          }
+        },
+        generateRequest: sinon.spy()
+      });
+
+      suite('groups tests', () => {
+        var element;
+        setup(() => {
+          replace('iron-ajax').with('fake-ajax');
+          element = fixture('basic');
+        });
+
+        test('shows a spinner when loading',
+          (done) => {
+            element.$.vtApi.set('loading', false);
+            flush(() => {
+              assert.isFalse(element.$.spinner.active);
+              element.$.vtApi.set('loading', true);
+            }).then(() => {
+              assert.isTrue(element.$.spinner.active);
+              done();
+            });
+        });
+
+        test('shows "You don\'t have any groups yet\" when we get 0 groups.',
+          (done) => {
+            element.$.vtApi.set('loading', false);
+            flush(() => {
+              assert.isOk(element.querySelector('#noGroups'));
+              element.$.vtApi.set('loading', true);
+            }).then(() => {
+              assert.equal(element.querySelector('#noGroups').style.display, 'none');
+              done();
+            });
+        });
+      });
+      });

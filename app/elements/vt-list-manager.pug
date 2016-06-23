@@ -1,0 +1,87 @@
+link(rel="import", href="../bower_components/polymer/polymer.html")
+link(rel="import", href="../bower_components/gold-email-input/gold-email-input.html")
+link(rel="import", href="../bower_components/paper-icon-button/paper-icon-button.html")
+link(rel="import", href="../bower_components/iron-a11y-keys/iron-a11y-keys.html")
+link(rel="import", href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html")
+link(rel="import", href="./behaviors/vt-list-manager-behavior.html")
+
+dom-module#vt-list-manager
+  template
+
+    style(is="custom-style" include="iron-flex iron-flex-alignment")
+    style.
+      :host {
+        display: block;
+      }
+
+      paper-icon-button#addItemInput {
+        color: var(--primary-color);
+        background-color: var(--text-primary-color);
+        border-radius: 50%;
+        margin-top: 14px;
+      }
+
+      paper-icon-button.remove_item {
+        color: var(--primary-color);
+      }
+
+      ul {
+        padding-left: 0;
+      }
+      li {
+        border-radius: 2px;
+      }
+      li:hover {
+        background-color: var(--light-primary-color);
+        color: #fff;
+      }
+      li:hover paper-icon-button.remove_item {
+        color: #fff;
+      }
+
+    .layout.horizontal
+      iron-a11y-keys(target="[[listAddItemInput(listAddItemSelector, email)]]" keys="enter" on-keys-pressed="addListItem")
+      template(is='dom-if', if='[[!email]]')
+        paper-input#addItemInput.flex(name="item" label="[[label]]")
+      template(is='dom-if', if='[[email]]')
+        gold-email-input#addItemInput.flex(name="item" label="[[label]]" auto-validate error-message="Must be an email address.")
+      paper-icon-button.self-end(elevation="0" icon="add" class="inline add_item" on-click="addListItem")
+    ul
+      template(is='dom-repeat', items='[[listValues]]')
+        li.layout.horizontal
+          paper-icon-button.remove_item(mini icon='clear', on-click='removeListItem', value='[[item]]')
+          span.flex.self-center [[listItemLabel(item)]]
+
+script.
+  Polymer({
+    is: 'vt-list-manager',
+
+    behaviors: [
+      window.Behaviors.VtListManagerBehavior
+    ],
+
+    properties: {
+      label: {
+        type: String,
+        value: 'Add Item',
+        notify: true
+      },
+
+      email: {
+        type: Boolean,
+        value: false,
+        notify: true
+      },
+
+      listValues: {
+        type: Array,
+        value: [],
+        notify: true
+      }
+    },
+
+    listAddItemInput() {
+      return this.querySelector(this.listAddItemSelector);
+    }
+  });
+

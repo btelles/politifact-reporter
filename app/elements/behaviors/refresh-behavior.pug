@@ -1,0 +1,127 @@
+html
+  body
+    link(rel='import', href='../../bower_components/polymer/polymer.html')
+    script.
+      window.Behaviors = window.Behaviors || [];
+      /** Makes an iron page send a new XHR api request every time it is shown.
+      *
+      * Use this in any main application screen whose data should be refreshed
+      * when a user lands on the page.
+      *
+      * Requires that the page have an iron-ajax#vtApi element whose path is
+      * set to the desired ajax request.
+      *
+      * Usage:
+      *
+      *   Polymer({
+      *     is: 'r-element',
+      *     behaviors: [ window.Behaviors.RefreshBehavior ]
+      *   });
+      *
+      **/
+      window.Behaviors.RefreshBehaviorImpl = {
+        properties: {
+          isVisible: {
+            type: Boolean,
+            value: false,
+            notify: true,
+            observer: 'maybeRefresh'
+          },
+          pageVars: {
+            type: Object,
+            value: {},
+            notify: true
+          }
+        },
+
+        observers: ['_autoRefresh(isVisible)'],
+
+        // Only refresh if a given criteria has been met.
+        // Use this if you only want to refresh data when some parameters
+        // are present.
+        refreshIf() {
+          return true;
+        },
+
+        // Most pages require some default parameters when fetching information.
+        // Fill in the default parameters by implementing this method. The most
+        // common one is: {'warehouse_id': this.warehouseId}
+        refreshParams() {
+          return {};
+        },
+
+        // Implement this to take some action after data has been refreshed.
+        // This will be called after customRefresh and maybeRefresh complete.
+        afterRefresh() {
+          return true;
+        },
+
+        // Set 'calculateVisibility' to 'true' when the host element is at the top
+        // of the view hierarchy.
+        // If the host element is at the top of the view hierarchy (e.g. r-locations,
+        // or r-items), then its data-route attribute should match the "app.route"
+        // property when the host is visible.
+        // If the host element is NOT at the top of the view hierarchy--that is,
+        // it's a child of another view (e.g. r-location-form), then the host element
+        // should receive the visibility state from the top-level element.
+        calculateVisibility: false,
+
+        // Number of milliseconds to wait before refreshing. Defaults to not
+        // automatically refreshing.
+        autoRefreshEvery: false,
+
+        // Call 'maybeRefresh' any time you want to update data on a page. If you
+        // need the refresh behavior to act differently than that specified by the
+        // r-api#rapi element, implement a customRefresh method that will be
+        // executed instead of the standard 'send' on r-api#rapi
+        maybeRefresh() {
+          if (this.isVisible && this.refreshIf()) {
+            this.setPageVars();
+          if (this.customRefresh) {
+            this.customRefresh();
+          } else {
+            this.send();
+          }
+          this.afterRefresh();
+        }
+        },
+        _autoRefresh() {
+          if (this.autoRefreshEvery && this.isVisible && !this.refreshInterval) {
+            this.refreshInterval = window.setInterval(
+              this.maybeRefresh.bind(this), this.autoRefreshEvery);
+          return;
+        }
+        window.clearInterval(this.refreshInterval);
+          this.refreshInterval = false;
+        },
+        setPageVars() {
+          // Implement this to set page-level variables.
+          this.fire('page-vars-set');
+          return true;
+        },
+        // Checks whether the page is currently visible by comparing
+        // the page's data-route attribute and the application's route property.
+        attributeChanged(attr) {
+          if (this.calculateVisibility) {
+            var app = window.app;
+            var visibility = (attr === 'class' && app && app.route === this.dataset.route);
+            this.set('isVisible', visibility);
+          }
+        },
+        send() {
+          this.$.vtApi.params = this.refreshParams();
+          this.$.vtApi.generateRequest();
+        },
+        handleError(event) {
+          let xhr = event.detail.request.xhr;
+          app.$.toast.text = this._getErrorMessage(xhr);
+          app.$.toast.show();
+        },
+        _getErrorMessage(xhr) {
+          return (xhr.response && xhr.response.description) ||
+            xhr.statusText || 'Something really wrong happened.';
+        }
+      };
+      window.Behaviors.RefreshBehavior = [
+        window.Behaviors.RefreshBehaviorImpl
+      ];

@@ -1,0 +1,169 @@
+link(rel='import', href='../bower_components/polymer/polymer.html')
+link(rel='import', href='../bower_components/iron-ajax/iron-ajax.html')
+link(rel='import', href='../bower_components/paper-spinner/paper-spinner.html')
+link(rel='import', href='../bower_components/neon-animation/neon-animatable-behavior.html')
+link(rel='import', href='../bower_components/vaadin-grid/vaadin-grid.html')
+link(rel='import', href='../styles/shared-styles.html')
+link(rel='import', href='../styles/app-theme.html')
+link(rel='import', href='./behaviors/refresh-behavior.html')
+link(rel='import', href='./behaviors/routing-behavior.html')
+dom-module#vt-users
+  template
+    style(is='custom-style', include='app-theme')
+    style(is='custom-style', include='shared-styles')
+    style.
+      :host {
+        @apply(--layout-vertical);
+        height: 100%;
+      }
+      h3 {
+        text-decoration: none;
+        color: var(--secondary-text-color);
+        padding: 18px 0 0 12px;
+      }
+      .container {
+        margin: 24px;
+      }
+      p.center {
+        text-align: center;
+      }
+    .container
+      vaadin-grid#grid(items='[[users]]', on-selected-items-changed='showUserForm')
+        table
+          colgroup
+            col(name='id')
+            col(name='attributes.first_name')
+            col(name='attributes.last_name')
+            col(name='attributes.email')
+            col(name='attributes.status')
+          thead
+            th ID
+            th First Name
+            th Last Name
+            th Email
+            th Status
+      p.center
+        paper-spinner#spinner(active='[[loading]]')
+      template(is='dom-if', if='[[!showUsers]]')
+        h3#noUsers You don&apos;t have any users yet.
+    iron-ajax#vtApi(url='[[usersApiPath()]]', last-response='{{apiResponse}}', loading='{{loading}}', on-error='handleError')
+script.
+  Polymer({
+    is: 'vt-users',
+    behaviors: [
+      window.Behaviors.RefreshBehavior,
+      window.Behaviors.RoutingBehavior,
+      Polymer.NeonAnimatableBehavior
+    ],
+
+    properties: {
+      users: {
+        type: Array,
+        value: [],
+        notify: true
+      },
+
+      selectedUserId: {
+        type: String,
+        value: null,
+        notify: true
+      },
+
+      showUsers: {
+        type: Boolean,
+        value: false,
+        computed: 'computeShowUsers(users, loading)'
+      },
+
+      loading: {
+        type: Boolean,
+        value: true,
+        notify: true,
+      },
+
+      filterText: {
+        type: String,
+        value: '',
+        notify: true,
+        observer: 'maybeRefresh'
+      },
+
+      filterTokens: {
+        type: Array,
+        value: []
+      },
+
+      sortColumn: {
+        type: String,
+        value: 'id',
+        notify: true
+      },
+
+      sortOrder: {
+        type: String,
+        notify: true
+      },
+
+      animationConfig: {
+        type: Object,
+        value: function() {
+          return {
+            'exit': [{
+              name: 'hero-animation',
+              id: 'hero',
+              fromPage: this
+            }]
+          };
+        }
+      }
+    },
+
+    observers: ['setUsers(apiResponse)'],
+
+    refreshParams() {
+      return {filter: this.filterText}
+    },
+
+    calculateVisibility: true,
+
+    computeShowUsers(users) {
+      return (users && users.length) || this.loading;
+    },
+
+    fabAction() {
+      this.set('selectedUserId', null);
+      page('/user_form');
+    },
+
+    setPageVars() {
+      this.set('pageVars.mainTitle', '- Users');
+    },
+
+    setUsers(apiResponse) {
+        this.set('users', (apiResponse && apiResponse.data) || [])
+    },
+
+    wrappable(array) {
+      return array && array.join(', ');
+    },
+
+    toggle(ev) {
+      this.querySelector(`#${ev.currentTarget.title}`).toggle();
+    },
+
+    showUserForm(event) {
+      let selected = this.$.grid.selection.selected();
+      if (selected.length === 1) {
+        let rowIndex = selected[0];
+        let rowNum = rowIndex + 1;
+        let row = this.$.grid.querySelector(`tbody tr:nth-child(${rowNum})`);
+        this.sharedElements = {
+          'hero': row
+        };
+        this.$.grid.getItem(rowIndex, (error, item) => {
+          this.set('selectedUserId', item.id);
+          page(`/user_form/${item.id}`);
+        });
+      }
+    }
+  });

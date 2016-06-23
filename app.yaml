@@ -1,0 +1,37 @@
+application: virustotalcloud
+module: ui
+version: devel
+api_version: 1
+runtime: python27
+threadsafe: true
+instance_class: F2
+automatic_scaling:
+  min_pending_latency: 400ms
+  max_pending_latency: 800ms
+  min_idle_instances: 0
+  max_idle_instances: 6
+
+libraries:
+- name: webapp2
+  version: latest
+
+builtins:
+- deferred: on
+- remote_api: on
+
+default_expiration: "5d"
+
+inbound_services:
+- warmup
+
+handlers:
+
+- url: /dashboard$
+  script: main.application
+
+- url: /dashboard
+  static_dir: dist
+
+
+skip_files:
+- ^(?!(main|dist))

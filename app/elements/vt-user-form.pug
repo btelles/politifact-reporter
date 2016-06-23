@@ -1,0 +1,251 @@
+link(rel='import', href='../bower_components/polymer/polymer.html')
+link(rel='import', href='../bower_components/vaadin-combo-box/vaadin-combo-box.html')
+link(rel='import', href='../bower_components/iron-form/iron-form.html')
+link(rel='import', href='../bower_components/neon-animation/neon-animatable-behavior.html')
+link(rel='import', href='../bower_components/paper-checkbox/paper-checkbox.html')
+link(rel='import', href='../bower_components/paper-button/paper-button.html')
+link(rel='import', href='../bower_components/paper-icon-button/paper-icon-button.html')
+link(rel='import', href='../bower_components/paper-input/paper-input.html')
+link(rel='import', href='../bower_components/paper-material/paper-material.html')
+link(rel='import', href='../styles/app-theme.html')
+link(rel='import', href='../styles/shared-styles.html')
+link(rel='import', href='../styles/datatable-styles.html')
+link(rel='import', href='./behaviors/country-code-behavior.html')
+link(rel='import', href='./behaviors/frontend-maps-behavior.html')
+link(rel='import', href='./behaviors/refresh-behavior.html')
+link(rel='import', href='./behaviors/routing-behavior.html')
+link(rel='import', href='./vt-list-manager.html')
+dom-module#vt-user-form
+  template
+    style(is='custom-style', include='app-theme shared-styles')
+    style.
+      :host {
+        @apply(--layout-vertical);
+      }
+      #main {
+        background-color: #fafafa;
+      }
+      .container {
+        @apply(--shadow-elevation-2dp);
+        background-color: #ffffff;
+        padding-left: 24px;
+        padding-right: 24px;
+        padding-top: 24px;
+      }
+      .layout.vertical {
+        width: 100%;
+      }
+      h4 {
+        margin: 48px 0 0 0;
+        min-width: 320px;
+      }
+      section.horizontal {
+        display: -ms-flexbox;
+        display: -webkit-flex;
+        display: flex;
+
+        -ms-flex-direction: row;
+        -webkit-flex-direction: row;
+        flex-direction: row;
+
+        // -ms-flex-pack: distribute;
+        // -webkit-justify-content: space-around;
+        // justify-content: space-around;
+        align-content: flex-start;
+
+        -ms-flex-wrap: wrap;
+        -webkit-flex-wrap: wrap;
+        flex-wrap: wrap;
+      }
+      section.horizontal > * {
+        margin-right: 24px;
+      }
+      section.around {
+        -ms-flex: 0 0 1 auto;
+        -webkit-flex: 0 0 1 auto;
+        flex: 0 0 1 auto;
+      }
+
+    iron-ajax#vtApi(url='[[userApiPath(userId)]]', last-response='{{apiResponse}}', on-error='handleError')
+    paper-material#main(elevation='0')
+      .container
+        section.toolbar
+          paper-button(on-click='_onClearButtonClick') Cancel
+          paper-button.primary(on-click='_submit') Save
+        section.horizontal
+          paper-input(label='First Name', value='{{user.data.attributes.first_name}}')
+          paper-input(label='Last Name', value='{{user.data.attributes.last_name}}')
+          paper-input(label='Profile Phrase', value='{{user.data.attributes.profile_phrase}}')
+        section.horizontal
+          p User Since: [[user.data.attributes.user_since]]
+          p Last Login: [[user.data.attributes.last_login]]
+        section.horizontal
+          section.around
+            h4 User Privileges
+            template(is='dom-repeat', items='[[userPrivileges]]', as='privilege')
+              p
+                paper-checkbox(value='[[privilege.backend]]', checked='{{privilege.selected}}') [[privilege.frontend]]
+          section.around
+            h4 Quotas
+            template(is='dom-repeat', items='[[userQuotas]]', as='quota')
+              paper-input(label='[[quota.frontend]]', value='{{quota.value}}', name='[[quota.backend]]')
+        section.toolbar.bottom
+          paper-button(on-click='_onClearButtonClick') Cancel
+          paper-button.primary(on-click='_submit') Save
+    iron-ajax#submit(url='[[usersApiPath(userId)]]', content-type='application/json', method='[[submitMethod]]', body='[[user]]', on-error='handleError')
+
+script.
+  Polymer({
+    is: 'vt-user-form',
+    behaviors: [
+      Polymer.NeonAnimatableBehavior,
+      window.Behaviors.CountryCodeBehavior,
+      window.Behaviors.RefreshBehavior,
+      window.Behaviors.FrontendMapsBehavior,
+      window.Behaviors.RoutingBehavior
+    ],
+    properties: {
+      userId: {
+        type: String,
+        notify: true
+      },
+
+      user: {
+        type: Object,
+        value: {
+          data: {
+            type: 'user',
+            attributes: {
+              quotas: [],
+              privileges: []
+            }
+          }
+        },
+        notify: true,
+      },
+
+      apiResponse: {
+        type: Object,
+        notify: true,
+        observer: '_updateFromApi'
+      },
+
+      userQuotas: {
+        type: Array,
+        notify: true
+      },
+
+      userPrivileges: {
+        type: Array,
+        notify: true
+      },
+
+      sharedElements: {
+        type: Object,
+        value: function() {
+          return {
+            'hero': this.$.main
+          };
+        }
+      },
+
+      animationConfig: {
+        type: Object,
+        value: function() {
+          return {
+            'entry': [{
+              name: 'hero-animation',
+              id: 'hero',
+              toPage: this
+            }],
+            'exit': [{
+              name: 'scale-down-animation',
+              node: this.$.main,
+              transformOrigin: '50% 50%',
+              axis: 'y'
+            }]
+          }
+        }
+      }
+    },
+
+    calculateVisibility: true,
+
+    customRefresh() {
+      if (app.params.userId) {
+        this.set('userId', app.params.userId);
+        this.send();
+      } else {
+        this.set('userId', null);
+        this.set('user', this.properties.user.value);
+        this._updatePrivileges();
+        this._updateQuotas();
+      }
+    },
+
+    _submit() {
+      this.set('user.data.attributes.privileges', this._paramPrisvileges());
+      this.set('user.data.attributes.quotas', this._paramQuotas());
+      if (this.userId) {
+        this.set('submitMethod', 'PATCH');
+      } else {
+        this.set('submitMethod', 'POST');
+      }
+      this.$.submit.generateRequest();
+    },
+
+    _onClearButtonClick() {
+      page('/users');
+    },
+
+    _paramQuotas() {
+      return this.userQuotas.map(q => {
+        return {name: q.backend, quota: parseInt(q.value)};
+      });
+    },
+
+    _paramPrisvileges() {
+      return this.userPrivileges.filter(p => !!p.selected).map(p => p.backend);
+    },
+
+    _updateFromApi() {
+      if (this.apiResponse) {
+        this.set('user', this.apiResponse);
+        this._updatePrivileges();
+        this._updateQuotas();
+      }
+    },
+
+    _updateQuotas() {
+      let quotas = this.user.data.attributes.quotas;
+      let userQuotas = this.UserQuotas.map(gp => {
+        let newVal = quotas.find(available => available.name === gp.backend);
+        gp.value = newVal && newVal.quota || null;
+        return gp;
+      });
+      this.set('userQuotas', userQuotas);
+      // Manually netify each quota value that it's been updated. This fixes
+      // a problem where checkboxes and field values are not updated when
+      // we empty these fields.
+      this.userQuotas.forEach((e, i) => {
+        var path = `userQuotas.${i}.value`;
+        this.set(path, this.get(path));
+      });
+    },
+
+    _updatePrivileges() {
+      let privileges = this.user.data.attributes.privileges;
+      let userPrivileges = this.UserPrivileges.map(gp => {
+        gp.selected = privileges.find(available => available === gp.backend);
+        return gp;
+      });
+      this.set('userPrivileges', userPrivileges);
+      // Manually netify each quota value that it's been updated. This fixes
+      // a problem where checkboxes and field values are not updated when
+      // we empty these fields.
+      this.userPrivileges.forEach((e, i) => {
+        var path = `userPrivileges.${i}.selected`;
+        this.set(path, !!this.get(path));
+      });
+    }
+  });

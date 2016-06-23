@@ -1,0 +1,54 @@
+doctype html
+html
+  head
+    meta(name='viewport', content='width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes')
+    title routing-behavior
+    script(src='../../bower_components/webcomponentsjs/webcomponents-lite.js')
+    script(src='../../bower_components/web-component-tester/browser.js')
+    script(src='../../bower_components/test-fixture/test-fixture-mocha.js')
+
+    link(rel='import', href='../../bower_components/polymer/polymer.html')
+    link(rel='import', href='../../elements/behaviors/routing-behavior.html')
+  body
+    test-fixture#basic
+      template
+        vt-routing#vtRouting(data-route='current_page')
+    script.
+      window.addEventListener('WebComponentsReady', (e) => {
+
+      Polymer({
+        is: 'vt-routing',
+        behaviors: [window.Behaviors.RoutingBehavior],
+      });
+
+      suite('routing-behavior tests', () => {
+        var element;
+        setup(() => {
+          element = fixture('basic');
+        });
+
+        test('defines an apiPathTo method that prepends standard API prefix.',
+          () => {
+          let simpleApiPath = element.apiPathTo('/me');
+          assert.equal(simpleApiPath, 'http://localhost:5000/api/v3/me');
+        });
+
+        test('defines an pathTo method that prepends standard baseUrl prefix.',
+          () => {
+          let simplePath = element.pathTo('/me');
+          assert.equal(simplePath, '/me');
+        });
+
+        test('groupPath interpolates the groupId.',
+          () => {
+          let simplePath = element.groupPath('acme');
+          assert.equal(simplePath, '/group/acme');
+        });
+
+        test('groupApiPath interpolates the groupId.',
+          () => {
+          let simpleApiPath = element.groupApiPath('acme');
+          assert.equal(simpleApiPath, 'http://localhost:5000/api/v3/groups/acme');
+        });
+      });
+      });

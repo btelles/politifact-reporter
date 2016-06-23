@@ -1,0 +1,99 @@
+doctype html
+html
+  head
+    meta(name='viewport', content='width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes')
+    title r-refresh-behavior
+    script(src='../../bower_components/webcomponentsjs/webcomponents-lite.js')
+    script(src='../../bower_components/web-component-tester/browser.js')
+    script(src='../../bower_components/test-fixture/test-fixture-mocha.js')
+
+    link(rel='import', href='../../bower_components/polymer/polymer.html')
+    link(rel='import', href='../../bower_components/iron-ajax/iron-ajax.html')
+    link(rel='import', href='../../elements/behaviors/refresh-behavior.html')
+  body
+    dom-module#vt-refresh
+      template
+        iron-ajax#vtApi(url="/hello", last-response='{{data}}')
+
+    test-fixture#basic
+      template
+        vt-refresh#vtRefresh(data-route='current_page')
+    script.
+      window.addEventListener('WebComponentsReady', (e) => {
+      Polymer({
+        is: 'fake-ajax',
+        properties: {
+          url: {
+            type: String,
+            notify: true
+          },
+          lastResponse: {
+            type: Object,
+            notify: true
+          }
+        },
+        generateRequest: sinon.spy()
+      });
+
+      Polymer({
+        is: 'vt-refresh',
+        behaviors: [window.Behaviors.RefreshBehavior],
+        calculateVisibility: true
+      });
+
+      suite('refresh-behavior tests', () => {
+        var element;
+        setup(() => {
+          replace('iron-ajax').with('fake-ajax');
+          element = fixture('basic');
+        });
+
+        test('does not request ajax if invisible', () => {
+          assert.isFalse(element.$.vtApi.generateRequest.called);
+        });
+
+        test('requests ajax if visible', () => {
+          element.$.vtApi.generateRequest.reset();
+          assert.isFalse(element.$.vtApi.generateRequest.called);
+          element.set('isVisible', true);
+          assert.isTrue(element.$.vtApi.generateRequest.called);
+        });
+
+        test('requests ajax again when visibility toggles', () => {
+          element.$.vtApi.generateRequest.reset();
+          assert.lengthOf(element.$.vtApi.generateRequest.callIds, 0);
+          element.set('isVisible', true);
+          assert.lengthOf(element.$.vtApi.generateRequest.callIds, 1);
+          element.set('isVisible', false);
+          assert.lengthOf(element.$.vtApi.generateRequest.callIds, 1);
+          element.set('isVisible', true);
+          assert.lengthOf(element.$.vtApi.generateRequest.callIds, 2);
+        });
+
+        test('maybeRefresh only refreshes if element is visible', () => {
+          element.$.vtApi.generateRequest.reset();
+          assert.lengthOf(element.$.vtApi.generateRequest.callIds, 0);
+          element.set('isVisible', false);
+          element.maybeRefresh();
+          assert.lengthOf(element.$.vtApi.generateRequest.callIds, 0);
+          element.set('isVisible', true);
+          assert.lengthOf(element.$.vtApi.generateRequest.callIds, 1);
+          element.maybeRefresh();
+          assert.lengthOf(element.$.vtApi.generateRequest.callIds, 2);
+        });
+
+        test('calculateVisibility checks that the app.route matches the current '+
+             'element\'s data-route attribute.', (done) => {
+          element.$.vtApi.generateRequest.reset();
+          assert.isFalse(element.$.vtApi.generateRequest.called);
+          window.app = { route: 'current_page' };
+          // Trigger "attr changed" event the way iron-pages would trigger it.
+          element.setAttribute('class', 'hello');
+          flush(() => {
+            assert.isTrue(element.$.vtApi.generateRequest.called);
+            done();
+          });
+        });
+
+      });
+      });

@@ -1,0 +1,45 @@
+doctype html
+html
+  head
+    meta(name='viewport', content='width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes')
+    title country-code-behavior
+    script(src='../../bower_components/webcomponentsjs/webcomponents-lite.js')
+    script(src='../../bower_components/web-component-tester/browser.js')
+    script(src='../../bower_components/test-fixture/test-fixture-mocha.js')
+
+    link(rel='import', href='../../bower_components/polymer/polymer.html')
+    link(rel='import', href='../../elements/behaviors/country-code-behavior.html')
+  body
+    test-fixture#basic
+      template
+        vt-country-code#vtCountryCode(data-route='current_page')
+    script.
+      window.addEventListener('WebComponentsReady', (e) => {
+
+      Polymer({
+        is: 'vt-country-code',
+        behaviors: [window.Behaviors.CountryCodeBehavior],
+      });
+
+      suite('country-code-behavior tests', () => {
+        var element;
+        setup(() => {
+          element = fixture('basic');
+        });
+
+        test('sets a countryCodes property to an array of {name, iso} values.',
+          () => {
+          let cc = element.countryCodes;
+          assert.isAtLeast(cc.length, 240);
+          assert.isAtMost(cc.length, 280);
+          let nameAndIsoAreAlwaysSet = _.all(cc, (codeObject) => {
+            if (codeObject.name && codeObject.iso.length === 2) {
+              return true;
+            }
+            console.log("A country code is incorrectly formatted:");
+            console.log(codeObject);
+          });
+          assert.isTrue(nameAndIsoAreAlwaysSet);
+        });
+      });
+      });

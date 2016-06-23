@@ -1,0 +1,90 @@
+html
+  body
+    script.
+      var _calculateBaseUrl = function() {
+        if (window.location.pathname.match(/^\/dashboard/)) {  // if production
+          return '/dashboard';
+        }
+        return '';
+      }
+
+      var _calculateApiUrl = function() {
+          if (window.location.pathname.match(/^\/dashboard/)) {
+            return '/api/v3';
+          }
+          return 'http://localhost:5000/api/v3'
+      }
+      window.Behaviors = window.Behaviors || [];
+      /** Provides simple pathTo helper for prepending baseUrl.
+      *
+      * Use this when you need to fetch or post data to the VT Api.
+      *
+      * Usage:
+      *
+      *   Polymer({
+      *     is: 'vt-element',
+      *     behaviors: [ window.Behaviors.RoutingBehavior ]
+      *   });
+      * Then in your element:
+      *
+      *   <a href="{{pathTo('/warehouses')}}"></a>
+      *
+      **/
+      window.Behaviors.RoutingBehavior = {
+        properties: {
+          baseUrl: {
+            type: String,
+            value: ''
+          },
+
+        },
+
+        baseUrl: _calculateBaseUrl(),
+
+        apiBaseUrl: _calculateApiUrl(),
+
+        apiPathTo(path) {
+          return this.apiBaseUrl + path;
+        },
+
+        pathTo(path) {
+          return this.baseUrl + path;
+        },
+
+        homePath() {
+          return this.pathTo('/home');
+        },
+
+        usersPath() {
+          return this.pathTo(`/users`);
+        },
+
+        userPath(userId) {
+          return this.pathTo(`/user_form/${userId}`);
+        },
+
+        groupsPath() {
+          return this.pathTo(`/groups`);
+        },
+
+        groupPath(groupId) {
+          return this.pathTo(`/group/${groupId}`);
+        },
+
+        usersApiPath() {
+          return this.apiPathTo(`/users`);
+        },
+
+        userApiPath(userId) {
+          return this.apiPathTo(`/users/${userId}`);
+        },
+
+        groupsApiPath() {
+          return this.apiPathTo(`/groups`);
+        },
+
+        groupApiPath(groupId) {
+          return this.apiPathTo(`/groups/${groupId}`);
+        },
+      };
+

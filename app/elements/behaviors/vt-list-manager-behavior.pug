@@ -1,0 +1,100 @@
+html
+  body
+    link(rel='import', href='../../bower_components/polymer/polymer.html')
+    script.
+      window.Behaviors = window.Behaviors || [];
+      /** Makes an iron page send a new XHR api request every time it is shown.
+      *
+      * Use this in any main application screen whose data should be refreshed
+      * when a user lands on the page.
+      *
+      * Requires that the page have an iron-ajax#vtApi element whose path is
+      * set to the desired ajax request.
+      *
+      * Usage:
+      *
+      *   Polymer({
+      *     is: 'r-element',
+      *     behaviors: [ window.Behaviors.RefreshBehavior ]
+      *   });
+      *
+      **/
+      window.Behaviors.VtListManagerBehavior = {
+        properties: {
+          listValuesPath: {
+            type: String,
+            value: 'listValues',
+            notify: true
+          },
+
+          listItemValuePath: {
+            type: String,
+            value: null,
+            notify: true,
+          },
+
+          listDefaultObject: {
+            type: Object,
+            notify: true
+          },
+
+          listAddItemSelector: {
+            type: String,
+            value: '#addItemInput',
+            notify: true
+          }
+        },
+
+        findIndexByPath(value) {
+          if (this.listItemValuePath) {
+            return this.get(this.listValuesPath).findIndex(e => {
+              return e[this.listItemValuePath] === value[this.listItemValuePath];
+            });
+          }
+          return this.get(this.listValuesPath).findIndex(e => e === value);
+        },
+
+        findByPath(value) {
+          if (this.listItemValuePath) {
+            return this.get(this.listValuesPath).find(e => {
+              return e[this.listItemValuePath] === value[this.listItemValuePath];
+            });
+          }
+          return this.get(this.listValuesPath).find(e => e === value);
+        },
+
+        newListItem(value) {
+          if (this.listItemValuePath) {
+            let newObj = _.assign({}, this.listDefaultObject);
+            newObj[this.listItemValuePath] = value;
+            return newObj;
+          }
+          return value;
+        },
+
+        listItemLabel(item) {
+          if (this.listItemValuePath) {
+            return item[this.listItemValuePath];
+          }
+          return item;
+        },
+
+        addListItem() {
+          var addItemInput = this.querySelector(this.listAddItemSelector);
+          var newItem = this.newListItem(addItemInput.value);
+          if (addItemInput.validate() && addItemInput.value &&
+              !(this.findByPath(newItem))
+             ) {
+            this.push(this.listValuesPath, newItem);
+          }
+          addItemInput.querySelector('input').focus();
+        },
+
+        removeListItem(event) {
+          var val = event.currentTarget.value;
+          var index = this.findIndexByPath(val);
+          if (index > -1) {
+            this.splice(this.listValuesPath, index, 1);
+          }
+        }
+      };

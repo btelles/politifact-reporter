@@ -1,0 +1,38 @@
+doctype html
+html
+  head
+    meta(name='viewport', content='width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes')
+    title r-refresh-behavior
+    script(src='../../bower_components/webcomponentsjs/webcomponents-lite.js')
+    script(src='../../bower_components/web-component-tester/browser.js')
+    script(src='../../bower_components/test-fixture/test-fixture-mocha.js')
+
+    link(rel='import', href='../../bower_components/polymer/polymer.html')
+    link(rel='import', href='../../elements/behaviors/frontend-maps-behavior.html')
+  body
+    test-fixture#basic
+      template
+        vt-maps
+    script.
+      window.addEventListener('WebComponentsReady', (e) => {
+
+      Polymer({
+        is: 'vt-maps',
+        behaviors: [window.Behaviors.FrontendMapsBehavior],
+        calculateVisibility: true
+      });
+      suite('frontend-maps-behavior tests', () => {
+        var element;
+        setup(() => {
+          replace('iron-ajax').with('fake-ajax');
+          element = fixture('basic');
+        });
+
+        test('maps privileges', () => {
+          let bVal = element.frontendFor(element.UserPrivileges, 'plaintext-source');
+          assert.equal(bVal, 'Plain Text Source');
+          let fVal = element.backendFor(element.UserPrivileges, 'Plain Text Source');
+          assert.equal(fVal, 'plaintext-source');
+        });
+      });  // Suite
+      });  // WebComponentsReady Listener

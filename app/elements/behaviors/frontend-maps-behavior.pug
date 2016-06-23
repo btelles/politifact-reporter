@@ -1,0 +1,129 @@
+html
+  body
+    link(rel='import', href='../../bower_components/polymer/polymer.html')
+    script.
+      window.Behaviors = window.Behaviors || [];
+      // Some of our backend code uses different names for what users see.
+      // This behavior maps backend names to user-facing frontend names.
+
+      // Convert an object's key value pairs to a format suitable for iteration:
+      //
+      //   Given:
+      //   {
+      //    key1: value1,
+      //    key2: value2
+      //   }
+      //
+      //  Returns:
+      //  [
+      //   {backend: key1, frontend: value1},
+      //   {backend: key2, frontend: value2}
+      //  ]
+      var _backendFrontendValues = function(backendFrontend) {
+        var result = [];
+        for (var k of Object.keys(backendFrontend)) {
+          result.push({backend: k, frontend: backendFrontend[k]});
+        }
+        return result;
+      };
+
+      window.Behaviors.FrontendMapsBehavior = {
+        backendFor(map, value) {
+          return _.find(map, function(i) { return i.frontend === value; }).backend;
+        },
+
+        frontendFor(map, value) {
+          return _.find(map, function(i) { return i.backend === value; }).frontend;
+        },
+
+        ready() {
+
+          this.UserPrivileges = _backendFrontendValues({
+            'source-info': 'Source Info',
+            'plaintext-source': 'Plain Text Source',
+            'google-legal': 'Google Legal',
+          });
+
+          this.GroupPrivileges = _backendFrontendValues({
+            'intelligence': 'Intelligence',  // Gives group access to Intelligence
+            'monitor': 'Monitor',  // Gives group access to VirusTotal Monitor
+            'monitor-dashboard': 'Monitor Dashboard',
+            'vthelp': 'VT Help (preferential support)',  // Gives group preferential support
+            'creditcards': 'Credit Cards (can pay via credit card)',  // Can pay via credit card
+            'click_to_accept': 'Show "Click to Accept" agreement',  // Should be displayed our service agreement online to execute electronically
+          });
+
+          // TODO(emartinez): Some of these privileges can be deprecated, e.g. feeds-admin
+          // privilege can be replaced by a shared secret with the pertinent system and
+          // handler. Similarly, not-av-results should be replaced by an engine whitelist
+          // set on the pertinent API key. Shrink down the list to its bare minimum.
+          this.ApiPrivileges = _backendFrontendValues({
+            'private': 'Private (allows extended info and others)',  // Flags a key as private, allows allinfo and other
+            'allinfo': 'Can request extended info on reported items',  // Can request extended info on reported items
+            'download': 'Can download files',  // Allows key to download files
+            'big-files': 'Can scan large files (> 32MB)',  // Allows key to scan files larger than 32MB
+            'distribution': 'Can request file distribution',  // Key can request file distribution
+            'full-distribution': 'Receives all files via distribution',  // Key receives all files via distribution
+            'url-distribution': 'Receives all URLs via Distribution',  // Key receives all URLs via distribution
+            'file-feed': 'Can access file feed API call',  // Key can access file feed API call
+            'url-feed': 'Can access URL feed API call',  // Key can access URL feed API call
+            // Key can access call to retrieve absolutely all scans performed on a particular
+            // file. Equivalent to Intelligence's past analyses listing.
+            'file-scans': 'Can retrieve all scans performed on a particular file',
+            // Key can access call to retrieve information about all submissions of a
+            // particular file. Equivalent to Intelligence's submissions listing. Includes
+            // ciphered source, file name, country, etc.
+            'file-submissions': 'Can retrieve info on all submissions of a particular file',
+            'sysinternals': 'Sys Internals Hash Lookup',  // Can use sysinternals hash lookup
+            'not-av-results': 'Can\'t see antivirus verdicts',
+            'not-scan-url': 'Can\'t perform URL scans ',
+            'not-scan-file': 'Can\'t consume file scan related calls',
+            'not-comment': 'Can\'t place comments on items.'
+          });
+
+          this.PartnerPrivileges = _backendFrontendValues({
+            'stats': 'Can consume engine stats programmatically',
+            'url-scanner': 'URL Scanner, recreate their dataset here',
+            'share-data': 'Can add interesting info to items in dataset',
+            'shared': 'Keys that are embedded in tools publicly shared',
+            'false-positives': 'Consume false positives for their engine in VirusTotal'
+          });
+
+          this.VirusTotalGooglePrivileges = _backendFrontendValues({
+            'file-iteration': 'Can call handler to iterate over all files in the datastore, internal only.',
+            'url-iteration': 'Can call handler to iterate over all urls in the datastore, internal only.',
+            'source-info': 'Can see all submissions by a source',
+            'plaintext-source': 'Can see plaintext submitter info',
+            'feeds-admin': 'Build file/url/item feeds in general',
+            'delete-files': 'Can mark files as private',
+            'trusted-verdicts': 'Can push trusted source data',
+            'datastore-replica': 'Can dump datastore protos'
+          });
+
+          this.GroupQuotas = _backendFrontendValues({
+            'intelligence.searches': 'Searches',
+            'intelligence.downloads': 'Downloads',
+            'intelligence.retrohunt.jobs': 'RetroHunt Jobs',
+            'intelligence.hunting.rules': 'Hunting Rules',
+            'monitor.space': 'Monitor Space'
+          });
+
+          this.UserQuotas = this.GroupQuotas;
+
+          this.ApiQuotas = [
+            {
+              backend: 'max_request_rate',
+              frontend: 'Max API Request Rate',
+              defaultValue: 4
+            }, {
+              backend: 'max_daily_requests',
+              frontend: 'API Daily Cap / Max Daily Requests',
+              defaultValue: 5760
+            }, {
+              backend: 'max_monthly_requests',
+              frontend: 'API Monthly Cap / Max Monthly Requests',
+              defaultValue: 0
+            }
+          ]
+        }
+      };

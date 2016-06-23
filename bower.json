@@ -7,7 +7,13 @@
     "page": "visionmedia/page.js#~1.6.4",
     "paper-elements": "PolymerElements/paper-elements#^1.0.1",
     "platinum-elements": "PolymerElements/platinum-elements#^1.1.0",
-    "polymer": "Polymer/polymer#^1.2.0"
+    "polymer": "Polymer/polymer#^1.2.0",
+    "neon-animation": "PolymerElements/neon-animation#^1.2.3",
+    "lodash": "^3.10.1",
+    "vaadin-combo-box": "^1.0.1",
+    "gold-email-input": "PolymerElements/gold-email-input#^1.0.7",
+    "paper-spinner": "^1.2.0",
+    "vaadin-grid": "^1.1.0"
   },
   "devDependencies": {
     "web-component-tester": "^4.0.0"

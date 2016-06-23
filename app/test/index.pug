@@ -1,0 +1,18 @@
+doctype html
+html
+  head
+    meta(name='viewport', content='width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes')
+    title Elements Test Runner
+    meta(charset='UTF-8')
+    script(src='../bower_components/webcomponentsjs/webcomponents-lite.min.js')
+    script(src='../bower_components/web-component-tester/browser.js')
+  body
+    span#browser-sync-binding
+    script.
+      WCT.loadSuites([
+        './behaviors/country-code-behavior-test.html',
+        './behaviors/refresh-behavior-test.html',
+        './behaviors/routing-behavior-test.html',
+        './behaviors/frontend-maps-behavior-test.html',
+        './vt-groups-test.html'
+      ]);
