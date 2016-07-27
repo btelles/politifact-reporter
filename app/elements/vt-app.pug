@@ -64,7 +64,7 @@ dom-module(id="vt-app")
     paper-scroll-header-panel#headerPanelMain(keep-condensed-header)
       paper-toolbar#mainToolbar
         paper-icon-button#paperToggle(icon='menu', paper-drawer-toggle='')
-        h2.menu-name VT Admin [[pageVars.mainTitle]]
+        h2.menu-name Politifact Reporter [[pageVars.mainTitle]]
         span#filter.space
           paper-icon-button.flex(icon='search', prefix)
           input.space(is='iron-input', placeholder='Filter', bind-value='{{filterText}}')
@@ -75,28 +75,16 @@ dom-module(id="vt-app")
             a(data-route='home', href='[[homePath()]]')
               iron-icon(icon='home')
               span Home
-            a(data-route='users', href='[[usersPath()]]')
-              iron-icon(icon='social:people')
-              span Users
-            a(data-route='groups', href='[[groupsPath()]]')
-              iron-icon(icon='group-work')
-              span Groups
           div(main)
             neon-animated-pages#pages(attr-for-selected='data-route', selected='{{route}}', selected-item='{{page}}')
               section(data-route='home', tabindex='-1')
                 h1.page-title(tabindex='-1') Home
                 p This is the home section
-              vt-users#users(data-route='users', on-item-click='_onUserClick', selected-user-id='{{userId}}', filter-text='[[filterText]]')
-              vt-user-form#userForm(data-route='user_form', on-close='_onClose', user-id='{{userId}}')
-              vt-groups#groups(data-route='groups', on-item-click='_onGroupClick', selected-group-id='{{groupId}}', filter-text='[[filterText]]')
-              vt-group-form#groupForm(data-route='group_form', on-close='_onClose', group-id='{{groupId}}')
-              section(data-route='api', tabindex='-1')
-                h1.page-title(tabindex='-1') APIs
-                p This is the APIs section
     template(is='dom-if', if='[[showFab]]')
       paper-fab#primaryFab(icon='add', on-click='fabAction')
     paper-toast#toast
       span.toast-hide-button(role='button', tabindex='0', on-click='_closeToast') Ok
+    iron-ajax(url='/politifact/api/people/all/json', last-response='{{people}}', auto)
 
 script.
   Polymer({
@@ -109,6 +97,10 @@ script.
       },
       filterText: {
         type: String,
+        notify: true
+      },
+      people: {
+        type: Array,
         notify: true
       }
     },

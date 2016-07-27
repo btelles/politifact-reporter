@@ -17,6 +17,7 @@ var drakov = require('drakov');
 var packageJson = require('./package.json');
 var crypto = require('crypto');
 var ensureFiles = require('./tasks/ensure-files.js');
+var request = require('request');
 
 var AUTOPREFIXER_BROWSERS = [
   'ie >= 10',
@@ -36,6 +37,17 @@ var dist = function(subpath) {
   return !subpath ? DIST : path.join(DIST, subpath);
 };
 
+var politifactProxy = function(req, res, next) {
+  let matches = req.url.match(/^\/politifact(.*)/);
+  let api = matches && matches[1];
+  if (api) {
+    request(`http://politifact.com/${api}`, (error, response, body) => {
+      res.end(body);
+    });
+    return;
+  }
+  next();
+};
 var styleTask = function(stylesPath, srcs) {
   return gulp.src(srcs.map(function(src) {
       return path.join('app', stylesPath, src);
@@ -274,12 +286,7 @@ gulp.task('serve', ['styles', 'elements', 'pug_and_js'], function() {
     // https: true,
     server: {
       baseDir: ['.tmp', 'app', 'test_data'],
-      middleware: [historyApiFallback(),
-        function(req, res, next) {
-          res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5000');
-          next();
-        }
-      ]
+      middleware: [historyApiFallback(), politifactProxy]
     }
   });
 

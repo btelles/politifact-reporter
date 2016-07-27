@@ -10,9 +10,9 @@ html
 
       var _calculateApiUrl = function() {
           if (window.location.pathname.match(/^\/dashboard/)) {
-            return '/api/v3';
+            return 'http://politifact.com/api';
           }
-          return 'http://localhost:5000/api/v3'
+          return '/politifact'
       }
       window.Behaviors = window.Behaviors || [];
       /** Provides simple pathTo helper for prepending baseUrl.
@@ -44,15 +44,15 @@ html
         apiBaseUrl: _calculateApiUrl(),
 
         apiPathTo(path) {
-          return this.apiBaseUrl + path;
+          return this.apiBaseUrl + path + '/json';
         },
 
         pathTo(path) {
           return this.baseUrl + path;
         },
 
-        homePath() {
-          return this.pathTo('/home');
+        allPeoplePath() {
+          return this.pathTo('/people/all');
         },
 
         usersPath() {
