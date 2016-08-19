@@ -42,7 +42,7 @@ dom-module#vt-list-manager
     .layout.horizontal
       iron-a11y-keys(target="[[listAddItemInput(listAddItemSelector, email)]]" keys="enter" on-keys-pressed="addListItem")
       template(is='dom-if', if='[[!email]]')
-        paper-input#addItemInput.flex(name="item" label="[[label]]")
+              vaadin-combo-box#addItemInput.flex(name="item" label="[[label]]" items="[[items]]", item-label-path='[[itemLabelPath]]', item-value-path='[[itemValuePath]]')
       template(is='dom-if', if='[[email]]')
         gold-email-input#addItemInput.flex(name="item" label="[[label]]" auto-validate error-message="Must be an email address.")
       paper-icon-button.self-end(elevation="0" icon="add" class="inline add_item" on-click="addListItem")
@@ -73,9 +73,24 @@ script.
         notify: true
       },
 
+      items: {
+        type: Array,
+        notify: true
+      },
+
       listValues: {
         type: Array,
         value: [],
+        notify: true
+      },
+
+      itemValuePath: {
+        type: String,
+        notify: true
+      },
+
+      itemLabelPath: {
+        type: String,
         notify: true
       }
     },

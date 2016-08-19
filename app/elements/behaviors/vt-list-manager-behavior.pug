@@ -21,13 +21,25 @@ html
       **/
       window.Behaviors.VtListManagerBehavior = {
         properties: {
+          storeFullItem: {
+            type: Boolean,
+            value: true,
+            notify: true
+          },
+
           listValuesPath: {
             type: String,
             value: 'listValues',
             notify: true
           },
 
-          listItemValuePath: {
+          itemLabelPath: {
+            type: String,
+            value: null,
+            notify: true,
+          },
+
+          itemValuePath: {
             type: String,
             value: null,
             notify: true,
@@ -55,26 +67,35 @@ html
         },
 
         findByPath(value) {
-          if (this.listItemValuePath) {
+          if (this.itemValuePath) {
             return this.get(this.listValuesPath).find(e => {
-              return e[this.listItemValuePath] === value[this.listItemValuePath];
+              return e[this.itemValuePath] === value[this.itemValuePath];
             });
           }
           return this.get(this.listValuesPath).find(e => e === value);
         },
 
         newListItem(value) {
-          if (this.listItemValuePath) {
+          if (this.storeFullItem && this.itemValuePath) {
+            return this.items.find(i => i[this.itemValuePath] === value);
+          }
+          if (this.itemValuePath) {
             let newObj = _.assign({}, this.listDefaultObject);
-            newObj[this.listItemValuePath] = value;
+            if (this.itemLabelPath) {
+               newObj[this.itemValuePath] = value;
+            }
+            newObj[this.itemValuePath] = value;
             return newObj;
           }
           return value;
         },
 
         listItemLabel(item) {
-          if (this.listItemValuePath) {
-            return item[this.listItemValuePath];
+          if (this.itemLabelPath) {
+            return item[this.itemLabelPath];
+          }
+          if (this.itemValuePath) {
+            return item[this.itemValuePath];
           }
           return item;
         },

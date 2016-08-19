@@ -79,12 +79,12 @@ dom-module(id="vt-app")
             neon-animated-pages#pages(attr-for-selected='data-route', selected='{{route}}', selected-item='{{page}}')
               section(data-route='home', tabindex='-1')
                 h1.page-title(tabindex='-1') Home
-                p This is the home section
+                vt-list-manager(label='Person', items='[[allPeople]]', list-values='{{people}}', item-label-path='fullName', item-value-path='name_slug')
     template(is='dom-if', if='[[showFab]]')
       paper-fab#primaryFab(icon='add', on-click='fabAction')
     paper-toast#toast
       span.toast-hide-button(role='button', tabindex='0', on-click='_closeToast') Ok
-    iron-ajax(url='/politifact/api/people/all/json', last-response='{{people}}', auto)
+    iron-ajax(url='/politifact/api/people/all/json', last-response='{{allPeopleRaw}}', auto)
 
 script.
   Polymer({
@@ -97,6 +97,15 @@ script.
       },
       filterText: {
         type: String,
+        notify: true
+      },
+      allPeopleRaw: {
+        type: Array,
+        notify: true
+      },
+      allPeople: {
+        type: Array,
+        computed: '_computeAllPeople(allPeopleRaw)',
         notify: true
       },
       people: {
@@ -133,6 +142,16 @@ script.
 
     _onClose() {
       this.set('route', 'groups');
+    },
+
+    _computeAllPeople() {
+      if (this.allPeopleRaw) {
+        return this.allPeopleRaw.map(function(p) {
+          p.fullName = [p.first_name, p.last_name].join(' ');
+          return p;
+        });
+      }
+      return [];
     },
 
     _refresh() {
